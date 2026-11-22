@@ -1,0 +1,435 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>CYBER BOT Pro — Mobile Guard</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="logo.png" />
+  <meta name="theme-color" content="#1E1E2E" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { background: #1E1E2E; color: #CDD6F4; min-height: 100vh; display: flex; justify-content: center; padding: 14px; }
+    .app { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 24px; }
+    .header { text-align: center; padding: 4px 0; }
+    .header img { width: 62px; height: 62px; border-radius: 16px; border: 2px solid #89B4FA; object-fit: cover; margin-bottom: 4px; }
+    .header h1 { color: #89B4FA; font-size: 1.4rem; font-weight: 800; }
+    .header p { color: #A6ADC8; font-size: 0.76rem; }
+    .box { background: #313244; border-radius: 14px; padding: 11px 14px; border: 1px solid #45475A; }
+    .section { background: #181825; border-radius: 14px; padding: 11px 14px; border: 1px solid #313244; }
+    .sec-title { font-size: 0.8rem; font-weight: 700; margin-bottom: 7px; display: block; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    button { border: none; border-radius: 10px; font-weight: 700; font-size: 0.84rem; padding: 9px 13px; cursor: pointer; }
+    button:active { transform: scale(0.96); }
+    .btn-red { background: #F38BA8; color: #11111B; }
+    .btn-green { background: #A6E3A1; color: #11111B; }
+    .btn-blue { background: #89B4FA; color: #11111B; }
+    .btn-yellow { background: #F9E2AF; color: #11111B; }
+    .btn-gray { background: #45475A; color: #CDD6F4; }
+    .radio-list { display: flex; flex-direction: column; gap: 6px; font-size: 0.84rem; }
+    .radio-list label { display: flex; align-items: center; gap: 8px; }
+    input[type="radio"] { accent-color: #89B4FA; width: 16px; height: 16px; }
+    input[type="range"] { accent-color: #CBA6F7; width: 125px; }
+    #camCircle { display: none; width: 140px; height: 140px; border-radius: 50%; overflow: hidden; border: 3px solid #F9E2AF; margin: 10px auto 2px; }
+    #cam { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+    .stats p { font-size: 0.82rem; margin-top: 4px; }
+    .vault textarea { width: 100%; height: 85px; background: #11111B; border: 1px solid #313244; border-radius: 10px; color: #F8FAFC; padding: 9px; font-size: 0.88rem; resize: none; outline: none; margin-top: 5px; }
+    #shieldOverlay { position: fixed; inset: 0; backdrop-filter: blur(26px); -webkit-backdrop-filter: blur(26px); background: rgba(10, 18, 36, 0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; overflow: hidden; }
+    #hexCanvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+    #shieldLogo { position: relative; width: 160px; height: 160px; border-radius: 30px; border: 3px solid #56CCF2; box-shadow: 0 0 42px rgba(86, 204, 242, 0.85); z-index: 2; pointer-events: none; }
+    #decoyBox { display: none; position: absolute; inset: 0; background: #F5F5F5; color: #1E1E2E; font-family: monospace; padding: 26px 18px; font-size: 0.9rem; line-height: 1.5; z-index: 3; overflow-y: auto; }
+    #pinUnlockBtn { position: fixed; bottom: 26px; z-index: 10; background: rgba(24, 24, 37, 0.88); color: #89B4FA; border: 1px solid #89B4FA; padding: 10px 18px; border-radius: 20px; font-size: 0.82rem; }
+    #logsModal { display: none; position: fixed; inset: 0; background: rgba(17, 17, 27, 0.96); z-index: 10000; padding: 18px; overflow-y: auto; }
+    .log-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    .log-item { background: #181825; padding: 7px; border-radius: 10px; border: 1px solid #313244; text-align: center; font-size: 0.72rem; }
+    .log-item img { width: 100%; border-radius: 6px; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <img src="logo.png" alt="CYBER BOT Pro" />
+      <h1>CYBER BOT Pro</h1>
+      <p>Multi-Angle Biometric Tracking • Force-Field Guard</p>
+    </div>
+
+    <div class="box row">
+      <span id="masterLbl" style="font-weight:700; color:#A6E3A1; font-size:0.92rem;">Master Shield: ON</span>
+      <button id="masterBtn" class="btn-red">Turn OFF</button>
+    </div>
+
+    <div class="section">
+      <span class="sec-title" style="color:#F9E2AF;">1. Multi-Angle Owner Calibration</span>
+      <div class="row">
+        <span id="regLbl" style="font-size:0.82rem; font-weight:700; color:#F38BA8;">Not Registered Yet</span>
+        <button id="regBtn" class="btn-blue">Register Owner</button>
+      </div>
+      <div id="camCircle"><video id="cam" autoplay playsinline muted></video></div>
+    </div>
+
+    <div class="section">
+      <span class="sec-title" style="color:#89B4FA;">2. Active Privacy Overlay Mode</span>
+      <div class="radio-list">
+        <label><input type="radio" name="mode" value="Smart Blur" checked /> Smart Blur + Hexagonal Force-Field</label>
+        <label><input type="radio" name="mode" value="Decoy Notes" /> Decoy Notes (CS204 Lecture Notes)</label>
+        <label><input type="radio" name="mode" value="Privacy Alert" /> Privacy Alert (Dark Cyber-Shield)</label>
+      </div>
+    </div>
+
+    <div class="section">
+      <span class="sec-title" style="color:#CBA6F7;">3. Distance & Match Precision</span>
+      <div class="row">
+        <span style="font-size:0.8rem;">Strictness: <b id="pctVal">50</b>%</span>
+        <input id="spySlider" type="range" min="30" max="75" value="50" />
+      </div>
+    </div>
+
+    <div class="section">
+      <span class="sec-title" style="color:#A6E3A1;">4. Anti-Bypass PIN & Menu Install</span>
+      <div class="row">
+        <span style="font-size:0.8rem;">Override PIN: <b>1234</b></span>
+        <div style="display:flex; gap:6px;">
+          <button id="installBtn" class="btn-green">Add to Menu</button>
+          <button id="pinBtn" class="btn-yellow">Set PIN</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="box stats">
+      <div id="statusLbl" style="font-weight:800; color:#F38BA8; font-size:0.92rem;">Guard Status: STANDBY</div>
+      <p id="detailLbl">Tap <b>Register Owner</b> and slowly look at all 4 corners (~2s).</p>
+      <p id="intruderLbl" style="color:#F9E2AF; font-weight:700;">Shoulder-Surfers Blocked & Logged: 0</p>
+    </div>
+
+    <div class="section vault">
+      <span class="sec-title" style="color:#89B4FA;">Protected Mobile Workspace</span>
+      <textarea placeholder="Write private notes or OTPs here. Looking away, moving the phone away, or someone peeking behind you locks the screen..."></textarea>
+    </div>
+
+    <div class="row" style="gap:10px;">
+      <button id="logsBtn" class="btn-gray" style="flex:1;">View Intruder Logs</button>
+    </div>
+  </div>
+
+  <div id="shieldOverlay">
+    <canvas id="hexCanvas"></canvas>
+    <img id="shieldLogo" src="logo.png" alt="CYBER BOT Pro Shield" />
+    <div id="decoyBox">
+      <h3>CS204: DATA STRUCTURES & ALGORITHMS</h3>
+      <hr style="margin:10px 0;" />
+      <p><b>1. Binary Search Trees (BST)</b><br/>- Left subtree contains keys lesser than parent.<br/>- Right subtree contains keys greater than parent.<br/>- Time Complexity: O(log n).</p>
+    </div>
+    <button id="pinUnlockBtn">Owner PIN Override</button>
+  </div>
+
+  <div id="logsModal">
+    <div class="row">
+      <h3 style="color:#89B4FA;">Intruder Logs</h3>
+      <div style="display:flex; gap:8px;">
+        <button id="clearLogsBtn" class="btn-red">Clear</button>
+        <button id="closeLogsBtn" class="btn-gray">Close</button>
+      </div>
+    </div>
+    <div id="logGrid" class="log-grid"></div>
+  </div>
+
+  <script>
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
+
+    let shieldEnabled = true, appState = "idle", isShielded = false, awayFrames = 0, lastSnapTime = 0, stream = null;
+    let regTemplates = [], regSizes = [];
+    let ownerData = JSON.parse(localStorage.getItem("cb_precise_owner_v2") || "null");
+    let savedPin = localStorage.getItem("cb_owner_pin") || "1234";
+    let intruderLogs = JSON.parse(localStorage.getItem("cb_intruder_logs") || "[]");
+
+    const video = document.getElementById("cam"), camCircle = document.getElementById("camCircle");
+    const regLbl = document.getElementById("regLbl"), regBtn = document.getElementById("regBtn");
+    const statusLbl = document.getElementById("statusLbl"), detailLbl = document.getElementById("detailLbl");
+    const intruderLbl = document.getElementById("intruderLbl"), shieldOverlay = document.getElementById("shieldOverlay");
+    const decoyBox = document.getElementById("decoyBox"), hexCanvas = document.getElementById("hexCanvas");
+    const ctx = hexCanvas.getContext("2d"), spySlider = document.getElementById("spySlider");
+
+    const vCan = document.createElement("canvas"); vCan.width = 80; vCan.height = 60;
+    const vCtx = vCan.getContext("2d", { willReadFrequently: true });
+    const fCan = document.createElement("canvas"); fCan.width = 20; fCan.height = 20;
+    const fCtx = fCan.getContext("2d", { willReadFrequently: true });
+
+    intruderLbl.textContent = `Shoulder-Surfers Blocked & Logged: ${intruderLogs.length}`;
+    spySlider.addEventListener("input", () => { document.getElementById("pctVal").textContent = spySlider.value; });
+
+    document.getElementById("pinBtn").addEventListener("click", () => {
+      if (prompt("Current PIN (default 1234):") !== savedPin) return alert("Wrong PIN.");
+      const n = prompt("New 4+ digit PIN:");
+      if (n && n.trim().length >= 4) { savedPin = n.trim(); localStorage.setItem("cb_owner_pin", savedPin); alert("PIN saved!"); }
+    });
+
+    document.getElementById("pinUnlockBtn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (prompt("Enter Owner PIN to unlock:") === savedPin) { hideShield(); toggleMaster(true); }
+      else alert("Incorrect PIN!");
+    });
+
+    function toggleMaster(forceOff = false) {
+      const mLbl = document.getElementById("masterLbl"), mBtn = document.getElementById("masterBtn");
+      if (forceOff || shieldEnabled) {
+        shieldEnabled = false; appState = "idle"; hideShield();
+        mLbl.textContent = "Master Shield: OFF"; mLbl.style.color = "#F38BA8";
+        mBtn.textContent = "Turn ON"; mBtn.className = "btn-green";
+        statusLbl.textContent = "Guard Status: OFF"; statusLbl.style.color = "#F38BA8";
+        detailLbl.textContent = "Protection paused.";
+      } else {
+        shieldEnabled = true;
+        mLbl.textContent = "Master Shield: ON"; mLbl.style.color = "#A6E3A1";
+        mBtn.textContent = "Turn OFF"; mBtn.className = "btn-red";
+        if (ownerData) initCamera().then(ok => { if (ok) startMonitoring(); });
+      }
+    }
+    document.getElementById("masterBtn").addEventListener("click", () => toggleMaster(false));
+
+    async function initCamera() {
+      if (stream && video.srcObject) return true;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 320, height: 240 }, audio: false });
+        video.srcObject = stream;
+        await new Promise(r => { video.onloadedmetadata = () => { video.play(); r(); }; });
+        return true;
+      } catch (e) {
+        detailLbl.style.color = "#F38BA8";
+        detailLbl.textContent = "Camera blocked! Open in Chrome/Safari & allow Camera.";
+        return false;
+      }
+    }
+
+    function trackFace() {
+      vCtx.drawImage(video, 0, 0, 80, 60);
+      const data = vCtx.getImageData(0, 0, 80, 60).data;
+      let sumX = 0, sumY = 0, count = 0;
+      const skinMask = new Uint8Array(80 * 60);
+
+      for (let y = 2; y < 58; y++) {
+        for (let x = 4; x < 76; x++) {
+          const idx = y * 80 + x;
+          const p = idx * 4;
+          const r = data[p], g = data[p + 1], b = data[p + 2];
+          const Y = 0.299 * r + 0.587 * g + 0.114 * b;
+          const Cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
+          const Cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
+          if (Y > 38 && Cb >= 72 && Cb <= 134 && Cr >= 130 && Cr <= 182 && r > g && r > b) {
+            skinMask[idx] = 1;
+            sumX += x;
+            sumY += y;
+            count++;
+          }
+        }
+      }
+
+      if (count < 90) return { found: false, pixels: count, spyPixels: 0 };
+
+      const cx = sumX / count;
+      const cy = sumY / count;
+
+      let varX = 0, varY = 0, primaryCount = 0, spyPixels = 0;
+      for (let y = 2; y < 58; y++) {
+        for (let x = 4; x < 76; x++) {
+          if (skinMask[y * 80 + x]) {
+            const dx = x - cx, dy = y - cy;
+            if (Math.abs(dx) <= 22 && Math.abs(dy) <= 24) {
+              varX += dx * dx;
+              varY += dy * dy;
+              primaryCount++;
+            } else if (Math.abs(dx) > 25) {
+              spyPixels++;
+            }
+          }
+        }
+      }
+
+      const stdX = Math.sqrt(varX / Math.max(1, primaryCount));
+      const stdY = Math.sqrt(varY / Math.max(1, primaryCount));
+      const boxW = Math.min(64, Math.max(18, stdX * 3.4));
+      const boxH = Math.min(54, Math.max(20, stdY * 3.6));
+      const bx = Math.max(0, Math.min(80 - boxW, cx - boxW / 2));
+      const by = Math.max(0, Math.min(60 - boxH, cy - boxH / 2));
+
+      fCtx.drawImage(vCan, bx, by, boxW, boxH, 0, 0, 20, 20);
+      const fData = fCtx.getImageData(0, 0, 20, 20).data;
+      const lum = new Float32Array(400);
+      for (let i = 0; i < 400; i++) {
+        lum[i] = 0.299 * fData[i * 4] + 0.587 * fData[i * 4 + 1] + 0.114 * fData[i * 4 + 2];
+      }
+
+      const feat = [];
+      let norm = 0;
+      for (let y = 1; y < 19; y++) {
+        for (let x = 1; x < 19; x++) {
+          const gx = lum[y * 20 + (x + 1)] - lum[y * 20 + (x - 1)];
+          const gy = lum[(y + 1) * 20 + x] - lum[(y - 1) * 20 + x];
+          feat.push(gx, gy);
+          norm += gx * gx + gy * gy;
+        }
+      }
+      norm = Math.sqrt(norm) + 1e-6;
+      for (let i = 0; i < feat.length; i++) feat[i] /= norm;
+
+      return { found: true, pixels: primaryCount, spyPixels, feat };
+    }
+
+    function bestTemplateScore(feat) {
+      if (!ownerData || !ownerData.templates) return 0;
+      let best = -1;
+      for (const tpl of ownerData.templates) {
+        let dot = 0;
+        for (let i = 0; i < feat.length; i++) dot += feat[i] * tpl[i];
+        if (dot > best) best = dot;
+      }
+      return best;
+    }
+
+    setInterval(() => {
+      if (appState === "idle" || video.readyState < 2) return;
+      const res = trackFace();
+
+      if (appState === "register") {
+        if (res.found && res.pixels >= 110) {
+          regTemplates.push(res.feat);
+          regSizes.push(res.pixels);
+          regLbl.style.color = "#F9E2AF";
+          regLbl.textContent = `Calibrating Angles: ${regTemplates.length}/12...`;
+        } else {
+          regLbl.style.color = "#F9E2AF";
+          regLbl.textContent = "Hold face in circle & look slightly around...";
+        }
+
+        if (regTemplates.length >= 12) {
+          const avgPixels = regSizes.reduce((a, b) => a + b, 0) / regSizes.length;
+          ownerData = { basePixels: avgPixels, templates: regTemplates };
+          localStorage.setItem("cb_precise_owner_v2", JSON.stringify(ownerData));
+          camCircle.style.display = "none";
+          regBtn.disabled = false;
+          regLbl.style.color = "#A6E3A1";
+          regLbl.textContent = "Owner Calibrated (12 Angles)";
+          if (shieldEnabled) startMonitoring();
+          else appState = "idle";
+        }
+      } else if (appState === "monitor" && shieldEnabled && ownerData) {
+        const strictness = parseFloat(spySlider.value) / 100.0;
+        const minSize = Math.max(85, ownerData.basePixels * (strictness * 0.85));
+        const minSim = 0.25 + (strictness * 0.42);
+
+        if (res.spyPixels > 125) {
+          awayFrames = 0;
+          detailLbl.style.color = "#F38BA8";
+          detailLbl.textContent = "BLOCKED: Shoulder-Surfer Detected!";
+          triggerShield(true);
+        } else if (res.found && res.pixels >= minSize) {
+          const score = bestTemplateScore(res.feat);
+          if (score >= minSim) {
+            awayFrames = 0;
+            detailLbl.style.color = "#A6E3A1";
+            detailLbl.textContent = `Owner Verified (${Math.round(score * 100)}% match) — Unlocked`;
+            hideShield();
+          } else {
+            awayFrames++;
+            detailLbl.style.color = "#F38BA8";
+            detailLbl.textContent = `Unrecognized Face (${Math.round(score * 100)}%) — Locking...`;
+            if (awayFrames >= 3) triggerShield(true);
+          }
+        } else {
+          awayFrames++;
+          detailLbl.style.color = "#F9E2AF";
+          detailLbl.textContent = `Owner Away / Phone Moved (${awayFrames}/3)...`;
+          if (awayFrames >= 3) {
+            detailLbl.textContent = "Locked — Look at phone to unlock";
+            triggerShield(false);
+          }
+        }
+      }
+    }, 150);
+
+    regBtn.addEventListener("click", async () => {
+      regBtn.disabled = true;
+      regLbl.style.color = "#F9E2AF";
+      regLbl.textContent = "Opening camera...";
+      if (!(await initCamera())) { regBtn.disabled = false; return; }
+      regTemplates = []; regSizes = [];
+      camCircle.style.display = "block";
+      appState = "register";
+    });
+
+    function startMonitoring() {
+      appState = "monitor"; awayFrames = 0;
+      statusLbl.style.color = "#A6E3A1";
+      statusLbl.textContent = "Guard Status: ACTIVE (Multi-Angle Guard)";
+    }
+
+    if (ownerData && shieldEnabled) {
+      regLbl.style.color = "#A6E3A1"; regLbl.textContent = "Owner Calibrated (12 Angles)";
+      initCamera().then(ok => { if (ok) startMonitoring(); });
+    }
+
+    function triggerShield(isStranger) {
+      if (isStranger && Date.now() - lastSnapTime > 2500 && video.readyState >= 2) {
+        lastSnapTime = Date.now();
+        const snap = document.createElement("canvas"); snap.width = 240; snap.height = 180;
+        snap.getContext("2d").drawImage(video, 0, 0, 240, 180);
+        intruderLogs.unshift({ time: new Date().toLocaleTimeString(), img: snap.toDataURL("image/jpeg", 0.7) });
+        intruderLogs = intruderLogs.slice(0, 20);
+        localStorage.setItem("cb_intruder_logs", JSON.stringify(intruderLogs));
+        intruderLbl.textContent = `Shoulder-Surfers Blocked & Logged: ${intruderLogs.length}`;
+      }
+      if (!isShielded) {
+        isShielded = true;
+        const m = document.querySelector('input[name="mode"]:checked').value;
+        shieldOverlay.style.display = "flex";
+        if (m === "Decoy Notes") { decoyBox.style.display = "block"; shieldOverlay.style.background = "#F5F5F5"; }
+        else { decoyBox.style.display = "none"; shieldOverlay.style.background = m === "Privacy Alert" ? "#0A0F1C" : "rgba(10, 18, 36, 0.9)"; pulseHex(window.innerWidth / 2, window.innerHeight / 2); }
+      }
+    }
+
+    function hideShield() {
+      if (isShielded) { isShielded = false; shieldOverlay.style.display = "none"; decoyBox.style.display = "none"; }
+    }
+
+    function pulseHex(cx, cy) {
+      hexCanvas.width = window.innerWidth; hexCanvas.height = window.innerHeight;
+      let alpha = 1.0; const r = 34, dx = r * 1.5, dy = r * Math.sqrt(3);
+      function frame() {
+        ctx.clearRect(0, 0, hexCanvas.width, hexCanvas.height);
+        if (alpha <= 0.03 || !isShielded) return;
+        for (let c = 0; c < hexCanvas.width / dx + 2; c++) {
+          for (let row = 0; row < hexCanvas.height / dy + 2; row++) {
+            const hx = c * dx, hy = row * dy + (c % 2 ? dy / 2 : 0);
+            const a = alpha * Math.max(0, 1 - Math.hypot(hx - cx, hy - cy) / (Math.max(hexCanvas.width, hexCanvas.height) * 0.65)) * 0.85;
+            if (a > 0.03) {
+              ctx.beginPath();
+              for (let i = 0; i < 6; i++) { const ang = (Math.PI / 3) * i; i === 0 ? ctx.moveTo(hx + r * Math.cos(ang), hy + r * Math.sin(ang)) : ctx.lineTo(hx + r * Math.cos(ang), hy + r * Math.sin(ang)); }
+              ctx.closePath(); ctx.strokeStyle = `rgba(86, 224, 255, ${a})`; ctx.lineWidth = 1.6; ctx.stroke();
+            }
+          }
+        }
+        alpha *= 0.87; requestAnimationFrame(frame);
+      }
+      frame();
+    }
+
+    shieldOverlay.addEventListener("pointerdown", e => { if (e.target.id !== "pinUnlockBtn") pulseHex(e.clientX, e.clientY); });
+
+    document.getElementById("logsBtn").addEventListener("click", () => {
+      document.getElementById("logGrid").innerHTML = intruderLogs.length ? intruderLogs.map(l => `<div class="log-item"><img src="${l.img}"/><span>${l.time}</span></div>`).join("") : "<p>No intruders logged yet.</p>";
+      document.getElementById("logsModal").style.display = "block";
+    });
+    document.getElementById("closeLogsBtn").addEventListener("click", () => { document.getElementById("logsModal").style.display = "none"; });
+    document.getElementById("clearLogsBtn").addEventListener("click", () => { intruderLogs = []; localStorage.setItem("cb_intruder_logs", "[]"); intruderLbl.textContent = "Shoulder-Surfers Blocked & Logged: 0"; document.getElementById("logGrid").innerHTML = "<p>Cleared.</p>"; });
+
+    let deferredPrompt;
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+    });
+    document.getElementById("installBtn").addEventListener("click", async () => {
+      if (deferredPrompt) { deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; }
+      else alert("Tap browser menu (⋮ or Share) -> 'Install app' or 'Add to Home Screen'.");
+    });
+  </script>
+</body>
+</html>
